@@ -371,6 +371,4 @@ Per bug, richieste di funzionalità o domande:
 
 ---
 
-**Sviluppato con ❤️ per semplificare l'organizzazione dei documenti aziendali**#   T h e O r g a n i z e r 
- 
- 
+**Sviluppato con ❤️ per semplificare l'organizzazione dei documenti aziendali**#
