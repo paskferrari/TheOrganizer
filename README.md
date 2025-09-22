@@ -6,6 +6,9 @@ Un tool Python multipiattaforma per organizzare automaticamente i file aziendali
 
 - **Interfaccia Doppia**: CLI per automazione e GUI moderna per uso interattivo
 - **Matching Fuzzy Intelligente**: Riconoscimento robusto dei nomi aziendali con normalizzazione avanzata
+- **Sistema di Configurazione Avanzato**: Regole specifiche per azienda con configurazione YAML centralizzata
+- **Filtraggio Intelligente**: Eliminazione automatica di parole generiche e falsi positivi
+- **Priorità Contestuale**: Bonus per match nel nome file, penalità per match solo nel percorso
 - **Organizzazione Automatica**: Struttura gerarchica Azienda → Tipo File → Anno → Data
 - **Sistema di Undo**: Ripristino completo delle operazioni con log CSV
 - **Multipiattaforma**: Windows, macOS, Linux con eseguibili standalone
@@ -148,11 +151,13 @@ Cartella_Destinazione/
 
 ### File di Configurazione
 
-L'applicazione salva automaticamente le impostazioni in `config.yaml`:
+L'applicazione utilizza due file di configurazione principali:
+
+#### 1. Configurazione Generale (`config.yaml`)
 
 ```yaml
 app_settings:
-  default_fuzzy_threshold: 85
+  default_fuzzy_threshold: 92  # Soglia più restrittiva
   default_target_suffix: "_organized"
   auto_create_date_folders: true
   log_operations: true
@@ -161,11 +166,54 @@ app_settings:
 company_profiles:
   - name: "ACME Corporation"
     aliases: ["acme", "acme corp", "acme spa"]
-    fuzzy_threshold: 85
+    fuzzy_threshold: 92
     custom_folders: {}
-  - name: "Beta Solutions"
-    aliases: ["beta", "beta sol"]
-    fuzzy_threshold: 90
+```
+
+#### 2. Configurazione Aziende Avanzata (`companies_config.yaml`)
+
+```yaml
+companies:
+  "Area Finanza Spa":
+    aliases:
+      - "Area Finanza"
+      - "AreaFinanza"
+      - "Area Finanza S.p.A."
+      - "Area Finanza SpA"
+    required_keywords:
+      - "finanza"
+    excluded_standalone:
+      - "area"
+      - "spa"
+      - "s.p.a"
+    
+  "Alcotec S.p.A":
+    aliases:
+      - "Alcotec"
+      - "Alcotec SpA"
+    required_keywords:
+      - "alcotec"
+    excluded_standalone:
+      - "spa"
+      - "s.p.a"
+
+# Parole generiche filtrate automaticamente
+generic_words:
+  - "area"
+  - "zone"
+  - "config"
+  - "test"
+  - "document"
+  - "file"
+  - "data"
+  - "temp"
+  - "backup"
+
+# Impostazioni matching avanzato
+matching_settings:
+  filename_bonus: 15      # Bonus % per match nel nome file
+  path_only_penalty: -10  # Penalità % per match solo nel percorso
+  min_threshold: 92       # Soglia minima matching
 ```
 
 ### Personalizzazione Tipi File
@@ -302,6 +350,15 @@ Per bug, richieste di funzionalità o domande:
 
 ## 🔄 Changelog
 
+### v1.1.0 (2025-01-22) - Matching Avanzato
+- **🔧 Sistema di Configurazione Centralizzato**: Nuovo file `companies_config.yaml` per regole specifiche
+- **🎯 Matching Più Preciso**: Soglia aumentata da 85% a 92% per ridurre falsi positivi
+- **🚫 Filtraggio Parole Generiche**: Eliminazione automatica di parole come "area", "zone", "config"
+- **📁 Priorità Contestuale**: Bonus +15% per match nel nome file, penalità -10% per match solo nel percorso
+- **⚙️ Regole Specifiche per Azienda**: Parole chiave richieste e parole escluse standalone
+- **🧪 Suite di Test Avanzata**: Nuovi test per verificare correzioni e precisione matching
+- **📋 Gestione Configurazione**: Classe `CompanyConfig` per caricamento e validazione automatica
+
 ### v1.0.0 (2024-03-15)
 - Rilascio iniziale
 - Interfaccia GUI completa con PyQt6
@@ -314,5 +371,6 @@ Per bug, richieste di funzionalità o domande:
 
 ---
 
-**Sviluppato con ❤️ per semplificare l'organizzazione dei documenti aziendali**#   T h e O r g a n i z e r  
+**Sviluppato con ❤️ per semplificare l'organizzazione dei documenti aziendali**#   T h e O r g a n i z e r 
+ 
  
