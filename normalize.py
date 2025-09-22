@@ -67,6 +67,21 @@ class CompanyNameNormalizer:
         'innovation', 'innovazione', 'development', 'sviluppo'
     }
     
+    # Parole troppo generiche che non dovrebbero essere considerate nomi aziendali
+    GENERIC_WORDS = {
+        'area', 'zone', 'zona', 'region', 'regione', 'city', 'citta', 'town',
+        'place', 'posto', 'location', 'posizione', 'site', 'sito', 'page',
+        'pagina', 'file', 'document', 'documento', 'report', 'rapporto',
+        'data', 'dati', 'info', 'information', 'informazione', 'detail',
+        'dettaglio', 'item', 'elemento', 'component', 'componente', 'module',
+        'modulo', 'lib', 'library', 'libreria', 'util', 'utils', 'utility',
+        'helper', 'support', 'supporto', 'test', 'demo', 'example', 'esempio',
+        'sample', 'campione', 'template', 'modello', 'base', 'core', 'main',
+        'index', 'home', 'root', 'src', 'source', 'dist', 'build', 'node',
+        'modules', 'assets', 'static', 'public', 'private', 'config',
+        'configurazione', 'setting', 'impostazione', 'option', 'opzione'
+    }
+    
     def __init__(self):
         """Inizializza il normalizzatore."""
         self._compile_patterns()
@@ -232,11 +247,13 @@ class CompanyNameNormalizer:
                 new_parts.extend(part.split(sep))
             parts = new_parts
         
-        # Filtra parti troppo corte o che sembrano date/numeri
+        # Filtra parti troppo corte, date/numeri e parole troppo generiche
         filtered_parts = []
         for part in parts:
             part = part.strip()
-            if len(part) >= 3 and not self._is_date_or_number(part):
+            if (len(part) >= 3 and 
+                not self._is_date_or_number(part) and 
+                not self._is_generic_word(part)):
                 filtered_parts.append(part)
         
         return filtered_parts
@@ -268,6 +285,11 @@ class CompanyNameNormalizer:
             pass
         
         return False
+    
+    def _is_generic_word(self, text: str) -> bool:
+        """Verifica se il testo è una parola troppo generica per essere un nome aziendale."""
+        normalized_text = text.lower().strip()
+        return normalized_text in self.GENERIC_WORDS
 
 
 # Istanza globale del normalizzatore

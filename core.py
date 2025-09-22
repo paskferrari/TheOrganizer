@@ -14,6 +14,7 @@ from rapidfuzz import fuzz, process
 from normalize import CompanyNameNormalizer, normalize_company_name, generate_company_aliases
 from file_types import FileCategory, get_file_category
 from io_ops import FileOrganizer, FileOperationLogger
+from company_config import CompanyConfig
 
 
 @dataclass
@@ -106,16 +107,27 @@ class DateExtractor:
 class CompanyMatcher:
     """Classe per il matching fuzzy dei nomi aziendali."""
     
-    def __init__(self, threshold: float = 85.0):
+    def __init__(self, threshold: float = 92.0):
         """
         Inizializza il matcher.
         
         Args:
-            threshold: Soglia minima per il matching (0-100)
+            threshold: Soglia minima per considerare un match valido (0-100)
         """
         self.threshold = threshold
         self.normalizer = CompanyNameNormalizer()
         self.company_aliases: Dict[str, List[str]] = {}
+        self.config = CompanyConfig()
+        
+        # Carica automaticamente le aziende dalla configurazione
+        self._load_companies_from_config()
+    
+    def _load_companies_from_config(self):
+        """Carica le aziende dalla configurazione."""
+        companies = self.config.get_companies()
+        for company_name, company_data in companies.items():
+            aliases = company_data.get('aliases', [])
+            self.add_company(company_name, aliases)
     
     def add_company(self, company_name: str, aliases: List[str] = None):
         """
@@ -189,9 +201,11 @@ class CompanyMatcher:
                     score = min(score + 10, 100.0)
                 
                 if score > best_score and score >= self.threshold:
-                    best_score = score
-                    best_company = company_name
-                    best_matched_text = alias
+                    # Verifica se il match è valido secondo le regole dell'azienda
+                    if self.config.is_valid_match(company_name, alias, normalized_text):
+                        best_score = score
+                        best_company = company_name
+                        best_matched_text = alias
         
         return best_company, best_score, best_matched_text
     
@@ -224,6 +238,61 @@ class CompanyMatcher:
         # Rimuovi duplicati e ordina per score
         unique_matches = {}
         for company, score, matched_text in matches:
+            if company not in unique_matches or score > unique_matches[company][0]:
+                unique_matches[company] = (score, matched_text)
+        
+        result = [(company, score, matched_text) 
+                 for company, (score, matched_text) in unique_matches.items()]
+        result.sort(key=lambda x: x[1], reverse=True)
+        
+        return result
+    
+    def extract_company_names_from_path(self, file_path: str) -> List[Tuple[str, float, str]]:
+        """
+        Estrae possibili nomi aziendali da un percorso file, dando priorità al nome del file.
+        
+        Args:
+            file_path: Percorso completo del file
+            
+        Returns:
+            Lista di tuple (nome_azienda, score, testo_matchato) ordinate per priorità
+        """
+        path = Path(file_path)
+        filename = path.name
+        
+        # Prima priorità: nome del file
+        filename_matches = self.extract_company_names_from_filename(filename)
+        
+        # Applica bonus per match nel nome del file
+        boosted_filename_matches = []
+        for company, score, matched_text in filename_matches:
+            # Bonus del 15% per match nel nome del file (max 100%)
+            boosted_score = min(score + 15, 100.0)
+            boosted_filename_matches.append((company, boosted_score, matched_text))
+        
+        # Seconda priorità: parti del percorso (solo se non abbiamo match nel filename)
+        path_matches = []
+        if not boosted_filename_matches:
+            # Estrai parti dal percorso completo (escludendo il nome del file)
+            path_parts = []
+            for part in path.parts[:-1]:  # Esclude il nome del file
+                path_parts.extend(self.normalizer.extract_company_names_from_filename(part))
+            
+            # Testa ogni parte del percorso
+            for part in path_parts:
+                company, score, matched_text = self.find_best_match(part)
+                if company and score >= self.threshold:
+                    # Penalizza i match nel percorso del 10%
+                    penalized_score = max(score - 10, 0)
+                    if penalized_score >= self.threshold:
+                        path_matches.append((company, penalized_score, matched_text))
+        
+        # Combina i risultati, dando priorità al nome del file
+        all_matches = boosted_filename_matches + path_matches
+        
+        # Rimuovi duplicati mantenendo il punteggio più alto
+        unique_matches = {}
+        for company, score, matched_text in all_matches:
             if company not in unique_matches or score > unique_matches[company][0]:
                 unique_matches[company] = (score, matched_text)
         
@@ -356,7 +425,7 @@ class FileScanner:
 class FileOrganizerCore:
     """Classe principale per l'organizzazione dei file."""
     
-    def __init__(self, threshold: float = 85.0, dry_run: bool = False):
+    def __init__(self, threshold: float = 92.0, dry_run: bool = False):
         """
         Inizializza l'organizzatore.
         
@@ -537,8 +606,8 @@ class FileOrganizerCore:
             if until_date and file_date > until_date:
                 return None
         
-        # Trova il match aziendale
-        matches = self.matcher.extract_company_names_from_filename(filename)
+        # Trova il match aziendale usando il nuovo metodo che dà priorità al nome del file
+        matches = self.matcher.extract_company_names_from_path(file_path)
         if not matches:
             return None
         

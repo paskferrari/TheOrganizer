@@ -43,7 +43,7 @@ class CompanyProfile:
 class AppSettings:
     """Impostazioni dell'applicazione."""
     # Impostazioni generali
-    default_threshold: float = 85.0
+    default_threshold: float = 92.0
     default_root_path: str = ""
     theme: str = "dark"  # "dark" o "light"
     language: str = "it"

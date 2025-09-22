@@ -1,0 +1,82 @@
+# Configurazione delle aziende e dei loro alias
+# Questo file definisce le aziende riconosciute dal sistema e i loro alias
+
+companies:
+  "Area Finanza Spa":
+    aliases:
+      - "Area Finanza"
+      - "AreaFinanza"
+      - "Area Finanza S.p.A."
+      - "Area Finanza S.p.A"
+      - "Area Finanza SpA"
+      - "AREA FINANZA SPA"
+      - "area finanza spa"
+      - "areafinanza"
+    # Parole chiave specifiche che devono essere presenti per un match valido
+    required_keywords:
+      - "finanza"
+    # Parole che se presenti da sole NON costituiscono un match valido
+    excluded_standalone:
+      - "area"
+      - "spa"
+      - "s.p.a"
+  
+  # Esempi di altre aziende che potrebbero essere configurate
+  "Alcotec S.p.A":
+    aliases:
+      - "Alcotec"
+      - "ALCOTEC"
+      - "Alcotec SpA"
+      - "Alcotec S.p.A."
+    required_keywords:
+      - "alcotec"
+    excluded_standalone:
+      - "spa"
+      - "s.p.a"
+  
+  "NOAH SPA":
+    aliases:
+      - "Noah"
+      - "NOAH"
+      - "Noah SpA"
+      - "Noah S.p.A"
+      - "Noah S.p.A."
+    required_keywords:
+      - "noah"
+    excluded_standalone:
+      - "spa"
+      - "s.p.a"
+  
+  "Easy Fintech":
+    aliases:
+      - "EasyFintech"
+      - "Easy-Fintech"
+      - "EASY FINTECH"
+      - "easy fintech"
+    required_keywords:
+      - "easy"
+      - "fintech"
+
+# Configurazioni globali
+settings:
+  # Soglia minima per il matching fuzzy
+  min_threshold: 92.0
+  
+  # Bonus per match nel nome del file (percentuale)
+  filename_bonus: 15.0
+  
+  # Penalità per match solo nel percorso (percentuale)
+  path_penalty: 10.0
+  
+  # Parole troppo generiche da ignorare
+  generic_words:
+    - "area"
+    - "zone"
+    - "zona"
+    - "region"
+    - "regione"
+    - "document"
+    - "documento"
+    - "file"
+    - "report"
+    - "rapporto"

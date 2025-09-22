@@ -319,8 +319,8 @@ Esempi:
     organize_parser.add_argument('root_path', help='Percorso della directory da organizzare')
     organize_parser.add_argument('company', help='Nome dell\'azienda')
     organize_parser.add_argument('--output-path', '-o', help='Percorso di output (default: stesso di input)')
-    organize_parser.add_argument('--threshold', '-t', type=float, default=85.0,
-                               help='Soglia per il matching fuzzy (0-100, default: 85)')
+    organize_parser.add_argument('--threshold', '-t', type=float, default=92.0,
+                               help='Soglia per il matching fuzzy (0-100, default: 92)')
     organize_parser.add_argument('--aliases', '-a', help='Alias dell\'azienda separati da virgola')
     organize_parser.add_argument('--since', help='Data inizio in formato YYYY-MM-DD')
     organize_parser.add_argument('--until', help='Data fine in formato YYYY-MM-DD')
