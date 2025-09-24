@@ -209,6 +209,37 @@ class CompanyMatcher:
         
         return best_company, best_score, best_matched_text
     
+    def _is_valid_single_word_match(self, word: str) -> bool:
+        """
+        Verifica se una singola parola può essere usata per il matching.
+        Evita match su parole troppo generiche o forme societarie standalone.
+        
+        Args:
+            word: Parola da verificare
+            
+        Returns:
+            True se la parola può essere usata per il matching
+        """
+        word_lower = word.lower().strip()
+        
+        # Evita forme societarie standalone
+        company_forms = {'spa', 's.p.a', 's.p.a.', 'srl', 's.r.l', 's.r.l.', 
+                        'sas', 's.a.s', 's.a.s.', 'snc', 's.n.c', 's.n.c.',
+                        'ltd', 'inc', 'corp', 'llc', 'gmbh', 'ag', 'sa', 'bv', 'nv'}
+        
+        if word_lower in company_forms:
+            return False
+        
+        # Evita parole troppo generiche (già definite nel normalizer)
+        if word_lower in self.normalizer.GENERIC_WORDS:
+            return False
+        
+        # Evita parole troppo corte (meno di 3 caratteri)
+        if len(word_lower) < 3:
+            return False
+        
+        return True
+    
     def extract_company_names_from_filename(self, filename: str) -> List[Tuple[str, float, str]]:
         """
         Estrae possibili nomi aziendali da un nome file.
@@ -221,19 +252,33 @@ class CompanyMatcher:
         """
         matches = []
         
-        # Estrai parti del nome file
-        parts = self.normalizer.extract_company_names_from_filename(filename)
-        
-        # Testa ogni parte
-        for part in parts:
-            company, score, matched_text = self.find_best_match(part)
-            if company and score >= self.threshold:
-                matches.append((company, score, matched_text))
-        
-        # Testa anche il nome file completo
+        # PRIORITÀ 1: Testa il nome file completo (per catturare frasi complete come "SKY LINE EUROPA")
         company, score, matched_text = self.find_best_match(filename)
         if company and score >= self.threshold:
             matches.append((company, score, matched_text))
+            # Se troviamo un match completo con score alto, non cercare parti singole
+            if score >= 95:
+                return [(company, score, matched_text)]
+        
+        # PRIORITÀ 2: Testa combinazioni di parole adiacenti (per frasi spezzate da separatori)
+        parts = self.normalizer.extract_company_names_from_filename(filename)
+        if len(parts) > 1:
+            # Testa combinazioni di 2-4 parole adiacenti
+            for i in range(len(parts)):
+                for j in range(i + 2, min(i + 5, len(parts) + 1)):  # Da 2 a 4 parole
+                    combined_text = ' '.join(parts[i:j])
+                    company, score, matched_text = self.find_best_match(combined_text)
+                    if company and score >= self.threshold:
+                        matches.append((company, score, matched_text))
+        
+        # PRIORITÀ 3: Solo se non abbiamo trovato match di qualità, testa parti singole
+        if not matches or max(match[1] for match in matches) < self.threshold + 5:
+            for part in parts:
+                # Evita match su parole troppo generiche o forme societarie standalone
+                if self._is_valid_single_word_match(part):
+                    company, score, matched_text = self.find_best_match(part)
+                    if company and score >= self.threshold:
+                        matches.append((company, score, matched_text))
         
         # Rimuovi duplicati e ordina per score
         unique_matches = {}

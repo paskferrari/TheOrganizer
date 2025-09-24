@@ -43,7 +43,9 @@ companies:
       - "Noah S.p.A."
     required_keywords:
       - "noah"
+      - "spa"
     excluded_standalone:
+      - "noah"
       - "spa"
       - "s.p.a"
   
@@ -56,6 +58,25 @@ companies:
     required_keywords:
       - "easy"
       - "fintech"
+  
+  "SKY LINE EUROPA":
+    aliases:
+      - "Sky Line Europa"
+      - "SKY LINE EUROPA"
+      - "sky line europa"
+      - "SkyLineEuropa"
+      - "Sky-Line-Europa"
+      - "Sky_Line_Europa"
+      - "SKYLINE EUROPA"
+      - "skyline europa"
+    required_keywords:
+      - "sky"
+      - "line"
+      - "europa"
+    excluded_standalone:
+      - "sky"
+      - "line"
+      - "europa"
 
 # Configurazioni globali
 settings:

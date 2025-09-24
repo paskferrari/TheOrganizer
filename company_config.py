@@ -139,11 +139,12 @@ class CompanyConfig:
         Returns:
             True se il match è valido
         """
-        # Verifica parole chiave richieste
+        # Verifica parole chiave richieste - TUTTE devono essere presenti
         required_keywords = self.get_required_keywords(company_name)
         if required_keywords:
             full_text_lower = full_text.lower()
-            if not any(keyword.lower() in full_text_lower for keyword in required_keywords):
+            # Cambiato da 'any' a 'all' - TUTTE le parole chiave devono essere presenti
+            if not all(keyword.lower() in full_text_lower for keyword in required_keywords):
                 return False
         
         # Verifica parole escluse standalone
